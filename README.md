@@ -50,11 +50,11 @@ Runs from an optional video file or a connected web camera.
 
 ---
 
-If you find any bugs report them to me (or better still submit a pull request, please) - toby.breckon@durham.ac.uk
-
-_"may the source be with you"_ - anon.
+### Known Issues
+- the resizing fix inside clahe.cpp for cell sizes that are not multiples of the image size does not work under all cases it appears
 
 ---
 
-### Known Issues
-- the resizing fix inside clahe.cpp for cell sizes that are not multiples of the image size does not work under all cases it appears
+If you find any bugs report them to me (or better still submit a pull request, please) - toby.breckon@durham.ac.uk
+
+_"may the source be with you"_ - anon.
