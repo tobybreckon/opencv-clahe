@@ -1,5 +1,5 @@
 // Example : adaptive histogram equalise grayscale image
-// usage: prog {<image_name> | <video_name>}
+// usage: prog [<video_name>]
 
 // Author : Toby Breckon, toby.breckon@cranfield.ac.uk
 
@@ -85,11 +85,11 @@ int main( int argc, char** argv )
   int bins = 256;
   int limit_counter = 14;
 
-  // if command line arguments are provided try to read image/video_name
+  // if command line arguments are provided try to read video_name
   // otherwise default to capture from attached H/W camera
 
     if(
-	  ( argc == 2 && (img = cvLoadImage( argv[1], 1)) != 0 ) ||
+	  // ( argc == 2 && (img = cvLoadImage( argv[1], 1)) != 0 ) ||
 	  ( argc == 2 && (capture = cvCreateFileCapture( argv[1] )) != 0 ) ||
 	  ( argc != 2 && (capture = cvCreateCameraCapture( 0 )) != 0 )
 	  )
@@ -142,31 +142,18 @@ int main( int argc, char** argv )
 
 	  while (keepProcessing) {
 
-		  // if capture object in use (i.e. video/camera)
-		  // get image from capture object
+			// cvQueryFrame s just a combination of cvGrabFrame
+			// and cvRetrieveFrame in one call.
 
-		  if (capture) {
-
-			  // cvQueryFrame s just a combination of cvGrabFrame
-			  // and cvRetrieveFrame in one call.
-
-			  img = cvQueryFrame(capture);
-			  if(!img){
-					if (argc == 2){
-						printf("End of video file reached\n");
-					} else {
-						printf("ERROR: cannot get next fram from camera\n");
-					}
-					exit(0);
-			  }
-
-		  }	else {
-
-			  // if not a capture object set event delay to zero so it waits
-			  // indefinitely (as single image file, no need to loop)
-
-			  EVENT_LOOP_DELAY = 0;
-		  }
+			img = cvQueryFrame(capture);
+		  if(!img){
+				if (argc == 2){
+					printf("End of video file reached\n");
+				} else {
+					printf("ERROR: cannot get next fram from camera\n");
+				}
+				exit(0);
+			}
 
 		  // *** Histogram Equalisation Processing
 
