@@ -178,10 +178,17 @@ int main( int argc, char** argv )
 				  grayImg = img;
 			  }
 
-  			CV_TIMER_START(X)
- 					cvCLAdaptEqualize(grayImg, eqImg, (unsigned int) xdivs, (unsigned int) ydivs,
-					(unsigned int) bins, (float) limit_counter * 0.1, CV_CLAHE_RANGE_FULL);
-			  CV_TIMER_STOP(X, "CLAHE")
+				// histogram equalize it (checking first for valid cells numbers)
+
+        if ((img->width % xdivs) || (img->height % ydivs))
+      	{
+					printf("X cells and Y cells must be multiples of image height and image width\n\n");
+				} else {
+  				CV_TIMER_START(X)
+ 						cvCLAdaptEqualize(grayImg, eqImg, (unsigned int) xdivs, (unsigned int) ydivs,
+						(unsigned int) bins, (float) limit_counter * 0.1, CV_CLAHE_RANGE_FULL);
+			  	CV_TIMER_STOP(X, "CLAHE")
+				}
 
 	    // *** draw histograms
 
