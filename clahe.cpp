@@ -10,8 +10,10 @@
 //-----------------------------------------------------------------------------
 // Improved by Shervin Emami on 17th Nov 2010, shervin.emami@gmail.com
 // http://www.shervinemami.co.cc/
+//-----------------------------------------------------------------------------
+// with 64-bit fix added from: Shashank Kulkarni
+// by Toby Breckon, toby.breckon@cranfield.ac.uk (May 2013)
 //*****************************************************************************
-
 
 #include <cv.h>       // open cv general include file
 
@@ -36,7 +38,7 @@ typedef unsigned short kz_pixel_t;       /* for 12 bit-per-pixel images (default
 
 /************* Prototype of Graphic Gemms CLAHE function. *********************/
 
-static int CLAHE(kz_pixel_t* pImage, unsigned int uiXRes, 
+static int CLAHE(kz_pixel_t* pImage, unsigned int uiXRes,
 		  unsigned int uiYRes, kz_pixel_t Min,
           kz_pixel_t Max, unsigned int uiNrX, unsigned int uiNrY,
           unsigned int uiNrBins, float fCliplimit);
@@ -48,9 +50,9 @@ static int CLAHE(kz_pixel_t* pImage, unsigned int uiXRes,
 // The number of "effective" greylevels in the output image is set by bins; selecting
 // a small value (eg. 128) speeds up processing and still produce an output image of
 // good quality. The output image will have the same minimum and maximum value as the input
-// image. A clip limit smaller than 1 (?? is this correct ) results in 
+// image. A clip limit smaller than 1 (?? is this correct ) results in
 //  standard (non-contrast limited) AHE.
- 
+
 
 // cvAdaptEqualize(src, dst, xdivs, ydivs, bins)
 //
@@ -65,12 +67,12 @@ static int CLAHE(kz_pixel_t* pImage, unsigned int uiXRes,
 //         pixel range to the min/max range of the input image or the full range of the
 //         pixel depth (8-bit in this case)
 
-void cvAdaptEqualize(IplImage *src, IplImage *dst, 
+void cvAdaptEqualize(IplImage *src, IplImage *dst,
 			unsigned int xdivs, unsigned int ydivs, unsigned int bins, int range)
 {
-	
+
 	// call CLAHE with negative limit (as flag value) to perform AHE (no limits)
-	
+
 	cvCLAdaptEqualize(src, dst, xdivs, ydivs, bins, -1.0, range);
 }
 
@@ -83,38 +85,38 @@ void cvAdaptEqualize(IplImage *src, IplImage *dst,
 // xdivs - number of cell divisions to use in vertical (x) direction (MIN=2 MAX = 16)
 // ydivs - number of cell divisions to use in vertical (y) direction (MIN=2 MAX = 16)
 // bins - number of histogram bins to use per division (MIN=2 MAX = 256)
-// limit - contrast limit for localised changes in contrast 
+// limit - contrast limit for localised changes in contrast
 // (limit >= 0 gives standard AHE without contrast limiting)
 // range - either of CV_CLAHE_RANGE_INPUT or CV_CLAHE_RANGE_FULL to limit the output
 //         pixel range to the min/max range of the input image or the full range of the
 //         pixel depth (8-bit in this case)
 
 
-void cvCLAdaptEqualize(IplImage *src, IplImage *dst, 
-			unsigned int xdivs, unsigned int ydivs, unsigned int bins, 
+void cvCLAdaptEqualize(IplImage *src, IplImage *dst,
+			unsigned int xdivs, unsigned int ydivs, unsigned int bins,
 			float limit, int range)
 {
-	
+
 	double min_val, max_val;
 	unsigned char min, max;
-	
+
 	// CV_FUNCNAME( "cvCLAdaptEquualize" );
     // __BEGIN__;
 
 	// check the inputs to the function
-	
+
 	int type;
 
 	if ((src == NULL) || (dst == NULL))
-        CV_ERROR( CV_StsUnsupportedFormat, "NULL value passed as image to function" );
-	
+      CV_ERROR( CV_StsUnsupportedFormat, "NULL value passed as image to function" );
+
     	CV_CALL( type = cvGetElemType( src ));
     	if( type != CV_8UC1 )
         	CV_ERROR( CV_StsUnsupportedFormat, "Only 8uC1 images are supported" );
-	CV_CALL( type = cvGetElemType( src ));
+			CV_CALL( type = cvGetElemType( src ));
     	if( type != CV_8UC1 )
         	CV_ERROR( CV_StsUnsupportedFormat, "Only 8uC1 images are supported" );
-	
+
 	//if( !CV_ARE_SIZES_EQ( src, dst ))	// Modified by Shervin Emami, 17Nov2010.
 	if (src->width != dst->width || src->height != dst->height)
         	CV_ERROR( CV_StsUnmatchedSizes, "src and dst images must be equal sizes" );
@@ -158,9 +160,9 @@ void cvCLAdaptEqualize(IplImage *src, IplImage *dst,
 		CV_ERROR( CV_StsBadFlag, "xdiv must be an integer multiple of image width " );
 	if (dst->height % ydivs)
 		CV_ERROR( CV_StsBadFlag, "ydiv must be an integer multiple of image height " );
-		
+
 	// get the min and max values of the image
-	
+
 	if (range == CV_CLAHE_RANGE_INPUT) {
 		cvMinMaxLoc(dst, &min_val, &max_val);
 		min = (unsigned char) min_val;
@@ -170,13 +172,12 @@ void cvCLAdaptEqualize(IplImage *src, IplImage *dst,
 		max = 255;
 	}
 	// call CLHAHE for in-place CLAHE
-	
-	//int rcode = 
-	CLAHE((kz_pixel_t*) (dst->imageData), (unsigned int) dst->width, (unsigned int) 
+	//int rcode =
+	CLAHE((kz_pixel_t*) (dst->imageData), (unsigned int) dst->width, (unsigned int)
 	dst->height, (kz_pixel_t) min, (kz_pixel_t) max, (unsigned int) xdivs, (unsigned int) ydivs,
               (unsigned int) bins, (float) limit);
 
-	//printf("RCODE %i\n", rcode);	
+	//printf("RCODE %i\n", rcode);
 
 	// If the dst image was enlarged to fit the alignment, then shrink it back now.
 	// Added by Shervin Emami, 17Nov2010.
@@ -186,7 +187,7 @@ void cvCLAdaptEqualize(IplImage *src, IplImage *dst,
 		cvReleaseImage(&dst);	// Free the enlarged image.
 	}
 }
-			
+
 // *****************************************************************************
 /*
  * ANSI C code from the article
@@ -216,13 +217,13 @@ void cvCLAdaptEqualize(IplImage *src, IplImage *dst,
 
 /*
 
-EULA: The Graphics Gems code is copyright-protected. In other words, you cannot 
-claim the text of the code as your own and resell it. Using the code is permitted 
-in any program, product, or library, non-commercial or commercial. Giving credit 
-is not required, though is a nice gesture. The code comes as-is, and if there are 
-any flaws or problems with any Gems code, nobody involved with Gems - authors, 
-editors, publishers, or webmasters - are to be held responsible. Basically, 
-don't be a jerk, and remember that anything free comes with no guarantee. 
+EULA: The Graphics Gems code is copyright-protected. In other words, you cannot
+claim the text of the code as your own and resell it. Using the code is permitted
+in any program, product, or library, non-commercial or commercial. Giving credit
+is not required, though is a nice gesture. The code comes as-is, and if there are
+any flaws or problems with any Gems code, nobody involved with Gems - authors,
+editors, publishers, or webmasters - are to be held responsible. Basically,
+don't be a jerk, and remember that anything free comes with no guarantee.
 
 - http://tog.acm.org/resources/GraphicsGems/ (August 2009)
 
@@ -237,7 +238,7 @@ static void MapHistogram (unsigned long*, kz_pixel_t, kz_pixel_t,
 static void MakeLut (kz_pixel_t*, kz_pixel_t, kz_pixel_t, unsigned int);
 static void Interpolate (kz_pixel_t*, int, unsigned long*, unsigned long*,
         unsigned long*, unsigned long*, unsigned int, unsigned int, kz_pixel_t*);
-        
+
 // *****************************************************************************
 
 /**************  Start of actual code **************/
@@ -280,7 +281,7 @@ static int CLAHE (kz_pixel_t* pImage, unsigned int uiXRes, unsigned int uiYRes,
     if (uiYRes % uiNrY) return -4;        /* y-resolution no multiple of uiNrY #TPB FIX */
     #ifndef BYTE_IMAGE					  /* #TPB FIX */
 		if (Max >= uiNR_OF_GREY) return -5;    /* maximum too large */
-	#endif
+	  #endif
     if (Min >= Max) return -6;            /* minimum equal or larger than maximum */
     if (uiNrX < 2 || uiNrY < 2) return -7;/* at least 4 contextual regions required */
     if (fCliplimit == 1.0) return 0;      /* is OK, immediately returns original image. */
@@ -357,8 +358,8 @@ void ClipHistogram (unsigned long* pulHistogram, unsigned int
 {
     unsigned long* pulBinPointer, *pulEndPointer, *pulHisto;
     unsigned long ulNrExcess, ulUpper, ulBinIncr, ulStepSize, i;
-	unsigned long ulOldNrExcess;  // #IAC Modification
-	
+	  unsigned long ulOldNrExcess;  // #IAC Modification
+
     long lBinExcess;
 
     ulNrExcess = 0;  pulBinPointer = pulHistogram;
@@ -382,10 +383,10 @@ void ClipHistogram (unsigned long* pulHistogram, unsigned int
           }
        }
     }
-	
+
     // while (ulNrExcess) {   /* Redistribute remaining excess  */
     //    pulEndPointer = &pulHistogram[uiNrGreylevels]; pulHisto = pulHistogram;
-	//
+	  //
     //    while (ulNrExcess && pulHisto < pulEndPointer) {
     //        ulStepSize = uiNrGreylevels / ulNrExcess;
     //        if (ulStepSize < 1) ulStepSize = 1;           /* stepsize at least 1 */
@@ -397,67 +398,92 @@ void ClipHistogram (unsigned long* pulHistogram, unsigned int
     //        }
     //        pulHisto++;           /* restart redistributing on other bin location */
     //    }
-    //} 
-	
-/* ####  
-       
-       IAC Modification:  
-       In the original version of the loop below (commented out above) it was possible for an infinite loop to get  
-       created.  If there was more pixels to be redistributed than available space then the  
-       while loop would never end.  This problem has been fixed by stopping the loop when all  
-       pixels have been redistributed OR when no pixels where redistributed in the previous iteration.  
-       This change allows very low clipping levels to be used.  
-         
-*/   
-        
-     do {   /* Redistribute remaining excess  */   
-         pulEndPointer = &pulHistogram[uiNrGreylevels]; pulHisto = pulHistogram;   
-            
-         ulOldNrExcess = ulNrExcess;     /* Store number of excess pixels for test later. */   
-            
-         while (ulNrExcess && pulHisto < pulEndPointer)    
-         {   
-             ulStepSize = uiNrGreylevels / ulNrExcess;   
-             if (ulStepSize < 1)    
-                 ulStepSize = 1;       /* stepsize at least 1 */   
-             for (pulBinPointer=pulHisto; pulBinPointer < pulEndPointer && ulNrExcess;   
-             pulBinPointer += ulStepSize)    
-             {   
-                 if (*pulBinPointer < ulClipLimit)    
-                 {   
-                     (*pulBinPointer)++;  ulNrExcess--;    /* reduce excess */   
-                 }   
-            }   
-             pulHisto++;       /* restart redistributing on other bin location */   
-         }   
-     } while ((ulNrExcess) && (ulNrExcess < ulOldNrExcess));   
-     /* Finish loop when we have no more pixels or we can't redistribute any more pixels */   
-	
-	
+    //}
+
+/* ####
+
+       IAC Modification:
+       In the original version of the loop below (commented out above) it was possible for an infinite loop to get
+       created.  If there was more pixels to be redistributed than available space then the
+       while loop would never end.  This problem has been fixed by stopping the loop when all
+       pixels have been redistributed OR when no pixels where redistributed in the previous iteration.
+       This change allows very low clipping levels to be used.
+
+*/
+
+    do {   /* Redistribute remaining excess  */
+         pulEndPointer = &pulHistogram[uiNrGreylevels]; pulHisto = pulHistogram;
+
+         ulOldNrExcess = ulNrExcess;     /* Store number of excess pixels for test later. */
+
+         while (ulNrExcess && pulHisto < pulEndPointer)
+         {
+             ulStepSize = uiNrGreylevels / ulNrExcess;
+             if (ulStepSize < 1)
+                 ulStepSize = 1;       /* stepsize at least 1 */
+             for (pulBinPointer=pulHisto; pulBinPointer < pulEndPointer && ulNrExcess;
+             pulBinPointer += ulStepSize)
+             {
+                 if (*pulBinPointer < ulClipLimit)
+                 {
+                     (*pulBinPointer)++;  ulNrExcess--;    /* reduce excess */
+                 }
+            }
+             pulHisto++;       /* restart redistributing on other bin location */
+         }
+     } while ((ulNrExcess) && (ulNrExcess < ulOldNrExcess));
+     /* Finish loop when we have no more pixels or we can't redistribute any more pixels */
+
+
 }
 
+// fix for this function from:
+// http://theperfectmixture.wordpress.com/2012/03/28/clahe-in-opencv-removing-the-seg-fault/
+// Credit: Shashank Kulkarni
+
 void MakeHistogram (kz_pixel_t* pImage, unsigned int uiXRes,
-                unsigned int uiSizeX, unsigned int uiSizeY,
-                unsigned long* pulHistogram,
-                unsigned int uiNrGreylevels, kz_pixel_t* pLookupTable)
+ unsigned int uiSizeX, unsigned int uiSizeY,
+ unsigned long* pulHistogram,
+ unsigned int uiNrGreylevels, kz_pixel_t* pLookupTable)
 /* This function classifies the greylevels present in the array image into
  * a greylevel histogram. The pLookupTable specifies the relationship
  * between the greyvalue of the pixel (typically between 0 and 4095) and
  * the corresponding bin in the histogram (usually containing only 128 bins).
  */
 {
-    kz_pixel_t* pImagePointer;
-    unsigned int i;
+    unsigned int i,j=0;
 
     for (i = 0; i < uiNrGreylevels; i++) pulHistogram[i] = 0L; /* clear histogram */
 
     for (i = 0; i < uiSizeY; i++) {
-        pImagePointer = &pImage[uiSizeX];
-        while (pImage < pImagePointer) pulHistogram[pLookupTable[*pImage++]]++;
-        pImagePointer += uiXRes;
-        pImage = &pImagePointer[-uiSizeX];
+            j = 0;
+            while (j < uiSizeX) { pulHistogram[pLookupTable[pImage[j]]]++; ++j; }
+            pImage = &pImage[uiXRes];
     }
 }
+
+// void MakeHistogram (kz_pixel_t* pImage, unsigned int uiXRes,
+//                unsigned int uiSizeX, unsigned int uiSizeY,
+//                unsigned long* pulHistogram,
+//                unsigned int uiNrGreylevels, kz_pixel_t* pLookupTable)
+/* This function classifies the greylevels present in the array image into
+ * a greylevel histogram. The pLookupTable specifies the relationship
+ * between the greyvalue of the pixel (typically between 0 and 4095) and
+ * the corresponding bin in the histogram (usually containing only 128 bins).
+ */
+// {
+//   kz_pixel_t* pImagePointer;
+//    unsigned int i;
+//
+//    for (i = 0; i < uiNrGreylevels; i++) pulHistogram[i] = 0L; /* clear histogram */
+//
+//    for (i = 0; i < uiSizeY; i++) {
+//        pImagePointer = &pImage[uiSizeX];
+//        while (pImage < pImagePointer) pulHistogram[pLookupTable[*pImage++]]++;
+//        pImagePointer += uiXRes;
+//        pImage = &pImagePointer[-uiSizeX];
+//    }
+// }
 
 void MapHistogram (unsigned long* pulHistogram, kz_pixel_t Min, kz_pixel_t Max,
                unsigned int uiNrGreylevels, unsigned long ulNrOfPixels)
