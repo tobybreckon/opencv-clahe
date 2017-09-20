@@ -135,8 +135,7 @@ void cvCLAdaptEqualize(IplImage *src, IplImage *dst,
 	// Also make sure the image is aligned to 8 pixels width, so that OpenCV won't add extra padding to the image.
 	// Added by Shervin Emami, 17Nov2010.
 	int enlarged = 0;
-	int origW = dst->width;
-	int origH = dst->height;
+
 	IplImage *tmpDst = 0;
 	if ((dst->width & (8-1)) || (dst->height & (8-1)) || (dst->width % xdivs) || (dst->height % ydivs)) {
 		int newW = ((dst->width + 8-1) & -8);	// Align to 8 pixels, so that widthStep hopefully equals width.
